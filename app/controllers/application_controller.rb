@@ -15,17 +15,16 @@ class ApplicationController < ActionController::API
         doc.xpath('//xmlns:url').each do |url|
             pages.push(url.at_xpath('xmlns:loc').text)
         end
-
+        
         pages.each_with_index do | item, index |
-            if index > 3
+            if index > 0
                 break
             end
-            selenium(item)
+            makedirs(item, ["chrome", "firefox"])
         end
-
     end
 
-    def selenium(url)
+    def makedirs(url, browsers)
         arr = url.split("/")
         domain = arr[2]
         filename = arr[arr.size - 1] + ".png"
@@ -38,26 +37,28 @@ class ApplicationController < ActionController::API
         end
 
         current_time = Time.now.strftime("%d-%m-%Y").to_s
-
-        newdir = domain + "/" + current_time + "/" + name
-
-
         
-        FileUtils.mkdir_p newdir unless Dir.exist?(newdir)
-
-
-        driver = Selenium::WebDriver.for :chrome
-        driver.navigate.to url
-        driver.save_screenshot("./#{newdir}/#{filename}")
-        driver.quit
-
-
-
-
-
-
-
-
-
+        browsers.each do | browser |
+            single_dir = domain + "/" + browser + "/" + current_time + "/" + name
+            FileUtils.mkdir_p single_dir unless Dir.exist?(single_dir)
+            selenium(url, single_dir, filename, browser)
+        end
     end
+
+
+    def selenium(url, newdir, filename, browser)
+        if browser == "chrome"
+            driver = Selenium::WebDriver.for :chrome
+            driver.navigate.to url
+            driver.save_screenshot("./#{newdir}/#{filename}")
+            driver.quit
+        end
+        if browser == "firefox"
+            driver = Selenium::WebDriver.for :firefox
+            driver.navigate.to url
+            driver.save_screenshot("./#{newdir}/#{filename}")
+            driver.quit
+        end
+    end
+
 end
