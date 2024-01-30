@@ -42,6 +42,5 @@ class ApplicationController < ActionController::API
         url = url.delete("/")
         driver.save_screenshot("./#{directory_name}/#{url}.png")
         driver.quit
-        # ##{url}/#{Time.now}/#{third_folder}/
     end
 end
