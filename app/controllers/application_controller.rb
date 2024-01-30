@@ -5,17 +5,11 @@ require 'uri'
 require 'fileutils'
 
 class ApplicationController < ActionController::API
+
     def test 
-        # Capturing screenshots
-        # puts "Called Endpoint"
-  
-        
 
-        # @doc = Nokogiri::XML(xml_str)
-
-        # puts @doc.xpath("//url")
-
-        doc = Nokogiri::XML(Net::HTTP.get(URI.parse('https://screenshotone.com/sitemap.xml')))
+        website_link = "https://screenshotone.com" + "/sitemap.xml"
+        doc = Nokogiri::XML(Net::HTTP.get(URI.parse(website_link)))
 
         pages = []
         doc.xpath('//xmlns:url').each do |url|
@@ -23,24 +17,47 @@ class ApplicationController < ActionController::API
         end
 
         pages.each_with_index do | item, index |
-            selenium(item)
-            if index > 2
+            if index > 3
                 break
             end
+            selenium(item)
         end
 
     end
 
     def selenium(url)
-        directory_name = Time.now.strftime("%d-%m-%Y").to_s
-        if !Dir.exist?(directory_name)
-            FileUtils.mkdir_p directory_name
+        arr = url.split("/")
+        domain = arr[2]
+        filename = arr[arr.size - 1] + ".png"
+
+        name = ""
+        arr.each_with_index do |item, index |
+            if index > 2 && index < arr.size - 1
+                name += item + "/"
+            end
         end
+
+        current_time = Time.now.strftime("%d-%m-%Y").to_s
+
+        newdir = domain + "/" + current_time + "/" + name
+
+
+        
+        FileUtils.mkdir_p newdir unless Dir.exist?(newdir)
+
 
         driver = Selenium::WebDriver.for :chrome
         driver.navigate.to url
-        url = url.delete("/")
-        driver.save_screenshot("./#{directory_name}/#{url}.png")
+        driver.save_screenshot("./#{newdir}/#{filename}")
         driver.quit
+
+
+
+
+
+
+
+
+
     end
 end
