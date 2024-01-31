@@ -8,6 +8,9 @@ class ApplicationController < ActionController::API
 
 
     def test 
+        p params[:url]
+        p params[:browsers].split(",")
+        p params[:devices].split(",")
         parser(params[:url], params[:browsers].split(","), params[:devices].split(","))
     end
 

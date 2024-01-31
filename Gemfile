@@ -46,3 +46,5 @@ group :development do
 end
 
 gem 'selenium-webdriver'
+
+gem 'rack-cors'
