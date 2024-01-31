@@ -6,18 +6,23 @@ require 'fileutils'
 
 class ApplicationController < ActionController::API
 
-    def test 
 
-        required_sizes = ["iPhone XS", "Samsung S20"]
+    def test 
+        parser(params[:url], params[:browsers].split(","), params[:devices].split(","))
+    end
+
+
+    def parser(domain, browserlist, deviceslist)
+
         device_arr = JSON.load (File.open "./screens.json")
 
         device_arr.each_with_index do |item, index |
-            if item["device"] == "iPhone XS"
+            if item["device"] == deviceslist
                 p item["width"], item["height"]
             end
         end
 
-        website_link = "https://screenshotone.com" + "/sitemap.xml"
+        website_link = domain + "/sitemap.xml"
         doc = Nokogiri::XML(Net::HTTP.get(URI.parse(website_link)))
 
         pages = []
@@ -29,7 +34,7 @@ class ApplicationController < ActionController::API
             if index > 0
                 break
             end
-            makedirs(item, ["chrome", "firefox"])
+            makedirs(item, browserlist)
         end
     end
 
@@ -53,7 +58,7 @@ class ApplicationController < ActionController::API
         browsers.each do | browser |
             single_dir = domain + "/" + browser + "/" + current_time + "/" + name
             FileUtils.mkdir_p single_dir unless Dir.exist?(single_dir)
-            selenium(url, single_dir, filename, browser, [[23,23],[232,2323],[232,23]])
+            selenium(url, single_dir, filename, browser, [[1920, 1080]])
         end
     end
 
@@ -67,7 +72,9 @@ class ApplicationController < ActionController::API
                 driver.save_screenshot("./#{newdir}/#{filename}")
                 driver.quit
             end
+            p browser
             if browser == "firefox"
+                p "executed"
                 driver = Selenium::WebDriver.for :firefox
                 driver.manage.window.resize_to(item[0], item[1])
                 driver.navigate.to url
