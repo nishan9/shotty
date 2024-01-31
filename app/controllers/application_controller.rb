@@ -16,9 +16,13 @@ class ApplicationController < ActionController::API
 
         device_arr = JSON.load (File.open "./screens.json")
 
+        list_of_resolutions = []
         device_arr.each_with_index do |item, index |
-            if item["device"] == deviceslist
-                p item["width"], item["height"]
+            deviceslist.each do | device |
+                if item["device"] == device
+                    new_size = [item["width"], item["height"]]
+                    list_of_resolutions.push(new_size)
+                end
             end
         end
 
@@ -34,13 +38,13 @@ class ApplicationController < ActionController::API
             if index > 0
                 break
             end
-            makedirs(item, browserlist)
+            makedirs(item, browserlist, list_of_resolutions)
         end
     end
 
 
 
-    def makedirs(url, browsers)
+    def makedirs(url, browsers, list_of_resolutions)
         arr = url.split("/")
         domain = arr[2]
         filename = arr[arr.size - 1] + ".png"
@@ -58,7 +62,7 @@ class ApplicationController < ActionController::API
         browsers.each do | browser |
             single_dir = domain + "/" + browser + "/" + current_time + "/" + name
             FileUtils.mkdir_p single_dir unless Dir.exist?(single_dir)
-            selenium(url, single_dir, filename, browser, [[1920, 1080]])
+            selenium(url, single_dir, filename, browser, list_of_resolutions)
         end
     end
 
