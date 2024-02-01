@@ -1,18 +1,77 @@
 require "selenium-webdriver"
+require 'fileutils'
 require 'nokogiri'
 require 'net/http'
 require 'uri'
-require 'fileutils'
 
 class ApplicationController < ActionController::API
 
     def test 
-        #parser(params[:url], params[:browsers].split(","), params[:devices].split(","))
-        export()
+        domain = params[:url]
+        list_of_pages = extract_urls(domain)
+        list_of_resolutions = get_resolutions(params[:devices].split(","))
+        list_of_browsers = params[:browsers].split(",")
+        
+        parser(domain, list_of_pages[0..1], list_of_browsers, list_of_resolutions)
     end
 
-    def parser(domain, browserlist, deviceslist)
+    def parser(domain, list_of_pages, list_of_browsers, list_of_resolutions) 
+        list_of_pages.each do | page |
+            list_of_browsers.each do | browser |
+                list_of_resolutions.each do | resolution |
+                    selenium(domain, page, browser, resolution)
+                end
+            end
+        end
+    end
 
+    def selenium(domain, page, browser, resolution)
+        current_time = Time.now.strftime("%d-%m-%Y").to_s
+        arr = page.split("/")
+        filename = arr[arr.size - 1] + ".png"
+        website_name = arr[2]
+        directory = ""
+        arr.each_with_index do |item, index |
+            if index > 2 && index < arr.size - 1
+                directory += item + "/"
+            end
+        end
+
+        if browser == "chrome"
+            driver = Selenium::WebDriver.for :chrome
+            driver.manage.window.resize_to(resolution[0], resolution[1])
+            driver.navigate.to page
+            driver.save_screenshot("./#{filename}")
+            driver.quit
+        end
+
+        Aws.config.update({
+            region: 'eu-west-1',
+            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', '')
+        })
+
+        s3_client = Aws::S3::Client.new(region: 'eu-west-1')
+
+
+        File.open("./#{filename}", 'rb') do |file|
+            s3_client.put_object(bucket: 'sky-protect-2', key: "#{website_name}/#{current_time}/#{directory}#{filename}", body: file)
+        end
+        
+    end
+
+
+    def extract_urls(domain)
+        website_link = domain + "/sitemap.xml"
+        doc = Nokogiri::XML(Net::HTTP.get(URI.parse(website_link)))
+
+        pages = []
+        doc.xpath('//xmlns:url').each do |url|
+            pages.push(url.at_xpath('xmlns:loc').text)
+        end
+        return pages
+    end
+
+    def get_resolutions(deviceslist)
         device_arr = JSON.load (File.open "./screens.json")
 
         list_of_resolutions = []
@@ -24,84 +83,7 @@ class ApplicationController < ActionController::API
                 end
             end
         end
-
-        website_link = domain + "/sitemap.xml"
-        doc = Nokogiri::XML(Net::HTTP.get(URI.parse(website_link)))
-
-        pages = []
-        doc.xpath('//xmlns:url').each do |url|
-            pages.push(url.at_xpath('xmlns:loc').text)
-        end
-        
-        pages.each_with_index do | item, index |
-            if index > 0
-                break
-            end
-            makedirs(item, browserlist, list_of_resolutions)
-        end
+        return list_of_resolutions
     end
 
-
-
-    def makedirs(url, browsers, list_of_resolutions)
-        arr = url.split("/")
-        domain = arr[2]
-        filename = arr[arr.size - 1] + ".png"
-
-        name = ""
-        arr.each_with_index do |item, index |
-            if index > 2 && index < arr.size - 1
-                name += item + "/"
-            end
-        end
-
-        current_time = Time.now.strftime("%d-%m-%Y").to_s
-        
-
-        browsers.each do | browser |
-            single_dir = domain + "/" + browser + "/" + current_time + "/" + name
-            FileUtils.mkdir_p single_dir unless Dir.exist?(single_dir)
-            selenium(url, single_dir, filename, browser, list_of_resolutions)
-        end
-    end
-
-
-    def selenium(url, newdir, filename, browser, screens)
-        screens.each_with_index do | item, index |
-            if browser == "chrome"
-                driver = Selenium::WebDriver.for :chrome
-                driver.manage.window.resize_to(item[0], item[1])
-                driver.navigate.to url
-                driver.save_screenshot("./#{newdir}/#{item}#{filename}")
-                export("./#{newdir}","#{item}#{filename}")
-            end
-
-            if browser == "firefox"
-                driver = Selenium::WebDriver.for :firefox
-                driver.manage.window.resize_to(item[0], item[1])
-                driver.navigate.to url
-                driver.save_screenshot("./#{newdir}/#{filename}")
-            end
-            driver.quit
-        end
-    end
-
-
-
-    def export()
-
-        Aws.config.update({
-            region: 'eu-west-1',
-            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', '')
-            })
-
-        s3_client = Aws::S3::Client.new(region: 'eu-west-1')
-
-
-        File.open("./screenshotone.com/chrome/01-02-2024/blog/sc.png", 'rb') do |file|
-            p file
-            s3_client.put_object(bucket: 'sky-protect-2', key: "./screenshotone.com/chrome/01-02-2024/blog/sc.png", body: file)
-        end
-
-    end
 end
