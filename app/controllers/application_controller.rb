@@ -28,7 +28,7 @@ class ApplicationController < ActionController::API
     def selenium(domain, page, browser, resolution)
         current_time = Time.now.strftime("%d-%m-%Y").to_s
         arr = page.split("/")
-        filename = arr[arr.size - 1] + ".png"
+        filename = get_device(resolution[0],resolution[1]) + "-" + arr[arr.size - 1] + ".png"
         website_name = arr[2]
         directory = ""
         arr.each_with_index do |item, index |
@@ -39,11 +39,14 @@ class ApplicationController < ActionController::API
 
         if browser == "chrome"
             driver = Selenium::WebDriver.for :chrome
-            driver.manage.window.resize_to(resolution[0], resolution[1])
-            driver.navigate.to page
-            driver.save_screenshot("./#{filename}")
-            driver.quit
+        elsif browser == "firefox"
+            driver = Selenium::WebDriver.for :firefox
         end
+
+        driver.manage.window.resize_to(resolution[0], resolution[1])
+        driver.navigate.to page
+        driver.save_screenshot("./#{filename}")
+        driver.quit
 
         Aws.config.update({
             region: 'eu-west-1',
@@ -56,13 +59,12 @@ class ApplicationController < ActionController::API
         File.open("./#{filename}", 'rb') do |file|
             s3_client.put_object(bucket: 'sky-protect-2', key: "#{website_name}/#{current_time}/#{directory}#{filename}", body: file)
         end
-        
+        File.delete("./#{filename}")
     end
 
 
     def extract_urls(domain)
-        website_link = domain + "/sitemap.xml"
-        doc = Nokogiri::XML(Net::HTTP.get(URI.parse(website_link)))
+        doc = Nokogiri::XML(Net::HTTP.get(URI.parse(domain + "/sitemap.xml")))
 
         pages = []
         doc.xpath('//xmlns:url').each do |url|
@@ -75,7 +77,7 @@ class ApplicationController < ActionController::API
         device_arr = JSON.load (File.open "./screens.json")
 
         list_of_resolutions = []
-        device_arr.each_with_index do |item, index |
+        device_arr.each do |item |
             deviceslist.each do | device |
                 if item["device"] == device
                     new_size = [item["width"], item["height"]]
@@ -84,6 +86,15 @@ class ApplicationController < ActionController::API
             end
         end
         return list_of_resolutions
+    end
+
+    def get_device(width, height)
+        device_arr = JSON.load (File.open "./screens.json")
+        device_arr.each do | item | 
+            if item["width"] == width && item["height"] == height
+                return item["device"]
+            end
+        end
     end
 
 end
