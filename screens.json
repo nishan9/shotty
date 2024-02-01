@@ -1,4 +1,12 @@
 [
-    {"device": "iPhone XS", "width" : 200, "height" : 1000}, 
-    {"device": "Samsung S20", "width" : 3728, "height" : 392}
+    {"device": "iPhone SE", "width" : 375, "height" : 667}, 
+    {"device": "Samsung S20", "width" : 412, "height" : 915},
+    {"device": "Google Pixel 5", "width" : 1080, "height" : 2340},
+    {"device": "iPad Pro (12.9-inch)", "width" : 2048, "height" : 2732},
+    {"device": "iPad Pro (11-inch)", "width" : 1668, "height" : 2388},
+    {"device": "MacBook Air (13-inch)", "width" : 1440, "height" : 900},
+    {"device": "MacBook Pro (13-inch)", "width" : 2560, "height" : 1600},
+    {"device": "MacBook Pro (16-inch)", "width" : 3072, "height" : 1920},
+    {"device": "iMac (21.5-inch)", "width" : 1920, "height" : 1080},
+    {"device": "iMac (27-inch)", "width" : 2560, "height" : 1440}
 ]

@@ -6,14 +6,10 @@ require 'fileutils'
 
 class ApplicationController < ActionController::API
 
-
     def test 
-        p params[:url]
-        p params[:browsers].split(",")
-        p params[:devices].split(",")
-        parser(params[:url], params[:browsers].split(","), params[:devices].split(","))
+        #parser(params[:url], params[:browsers].split(","), params[:devices].split(","))
+        export()
     end
-
 
     def parser(domain, browserlist, deviceslist)
 
@@ -76,20 +72,36 @@ class ApplicationController < ActionController::API
                 driver = Selenium::WebDriver.for :chrome
                 driver.manage.window.resize_to(item[0], item[1])
                 driver.navigate.to url
-                driver.save_screenshot("./#{newdir}/#{filename}")
-                driver.quit
+                driver.save_screenshot("./#{newdir}/#{item}#{filename}")
+                export("./#{newdir}","#{item}#{filename}")
             end
-            p browser
+
             if browser == "firefox"
-                p "executed"
                 driver = Selenium::WebDriver.for :firefox
                 driver.manage.window.resize_to(item[0], item[1])
                 driver.navigate.to url
                 driver.save_screenshot("./#{newdir}/#{filename}")
-                driver.quit
             end
-
+            driver.quit
         end
     end
 
+
+
+    def export()
+
+        Aws.config.update({
+            region: 'eu-west-1',
+            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', '')
+            })
+
+        s3_client = Aws::S3::Client.new(region: 'eu-west-1')
+
+
+        File.open("./screenshotone.com/chrome/01-02-2024/blog/sc.png", 'rb') do |file|
+            p file
+            s3_client.put_object(bucket: 'sky-protect-2', key: "./screenshotone.com/chrome/01-02-2024/blog/sc.png", body: file)
+        end
+
+    end
 end
