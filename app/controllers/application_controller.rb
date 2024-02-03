@@ -13,6 +13,7 @@ class ApplicationController < ActionController::API
         list_of_browsers = params[:browsers].split(",")
         
         parser(domain, list_of_pages[0..1], list_of_browsers, list_of_resolutions)
+        render status: :ok
     end
 
     def parser(domain, list_of_pages, list_of_browsers, list_of_resolutions) 
@@ -27,12 +28,12 @@ class ApplicationController < ActionController::API
 
     def selenium(domain, page, browser, resolution)
         current_time = Time.now.strftime("%d-%m-%Y").to_s
-        arr = page.split("/")
-        filename = get_device(resolution[0],resolution[1]) + "-" + arr[arr.size - 1] + ".png"
-        website_name = arr[2]
+        url_arr = page.split("/")
+        filename = get_device(resolution[0],resolution[1]) + "-" + url_arr[url_arr.size - 1] + ".png"
+        website_name = url_arr[2]
         directory = ""
-        arr.each_with_index do |item, index |
-            if index > 2 && index < arr.size - 1
+        url_arr.each_with_index do |item, index |
+            if index > 2 && index < url_arr.size - 1
                 directory += item + "/"
             end
         end
@@ -42,7 +43,7 @@ class ApplicationController < ActionController::API
         elsif browser == "firefox"
             driver = Selenium::WebDriver.for :firefox
         end
-
+        
         driver.manage.window.resize_to(resolution[0], resolution[1])
         driver.navigate.to page
         driver.save_screenshot("./#{filename}")
@@ -50,7 +51,7 @@ class ApplicationController < ActionController::API
 
         Aws.config.update({
             region: 'eu-west-1',
-            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', '')
+            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', 'JPqcvlbW9dGYtHZhEaHG5NtuvUE+xPSbI9VJc13M')
         })
 
         s3_client = Aws::S3::Client.new(region: 'eu-west-1')
@@ -73,11 +74,13 @@ class ApplicationController < ActionController::API
         return pages
     end
 
+    private
+
     def get_resolutions(deviceslist)
-        device_arr = JSON.load (File.open "./screens.json")
+        device_url_arr = JSON.load (File.open "./screens.json")
 
         list_of_resolutions = []
-        device_arr.each do |item |
+        device_url_arr.each do |item |
             deviceslist.each do | device |
                 if item["device"] == device
                     new_size = [item["width"], item["height"]]
@@ -89,8 +92,8 @@ class ApplicationController < ActionController::API
     end
 
     def get_device(width, height)
-        device_arr = JSON.load (File.open "./screens.json")
-        device_arr.each do | item | 
+        device_url_arr = JSON.load (File.open "./screens.json")
+        device_url_arr.each do | item | 
             if item["width"] == width && item["height"] == height
                 return item["device"]
             end
