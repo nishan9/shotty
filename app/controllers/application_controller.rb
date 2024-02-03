@@ -22,7 +22,7 @@ class ApplicationController < ActionController::API
     def directory 
         fileExplorer = S3BucketFileExplorer.new()
         folders = fileExplorer.root_folder(params[:prefix])
-        render json: folders, status: :ok
+        render json: folders , status: :ok
     end
 
 
