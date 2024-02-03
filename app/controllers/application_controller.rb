@@ -4,6 +4,7 @@ require 'nokogiri'
 require 'net/http'
 require 'uri'
 require_relative '../services/extract_url_service'
+require_relative '../services/s3_bucket_file_explorer'
 
 class ApplicationController < ActionController::API
 
@@ -16,6 +17,14 @@ class ApplicationController < ActionController::API
         parser(params[:url], list_of_pages[0..1], list_of_browsers, list_of_resolutions)
         render status: :ok
     end
+
+
+    def directory 
+        fileExplorer = S3BucketFileExplorer.new()
+        folders = fileExplorer.root_folder()
+        render json: folders, status: :ok
+    end
+
 
     def parser(domain, list_of_pages, list_of_browsers, list_of_resolutions) 
         list_of_pages.each do | page |
