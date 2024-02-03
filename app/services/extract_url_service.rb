@@ -1,3 +1,4 @@
+
 class ExtractURLService
     def initialize(domain)
         @domain = domain
