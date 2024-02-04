@@ -50,9 +50,9 @@ jobs:
         echo ${{ secrets.AWS_ACCESS_KEY_ID }}
         #docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         #docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        #docker build -t shotty .
-        #docker push shotty
-        #echo "image=shotty" >> $GITHUB_OUTPUT
+        docker build -t shotty .
+        docker push shotty
+        echo "image=shotty" >> $GITHUB_OUTPUT
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
