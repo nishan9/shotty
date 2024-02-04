@@ -61,7 +61,7 @@ class ApplicationController < ActionController::API
 
         Aws.config.update({
             region: 'eu-west-1',
-            credentials: Aws::Credentials.new('AKIAQFID3FIP6UI6DCNJ', ENV['aws_secret'])
+            credentials: Aws::Credentials.new(ENV['aws_key'], ENV['aws_secret'])
         })
 
         s3_client = Aws::S3::Client.new(region: 'eu-west-1')
