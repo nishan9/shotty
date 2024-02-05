@@ -3,18 +3,18 @@ require 'fileutils'
 require 'nokogiri'
 require 'net/http'
 require 'uri'
-require_relative '../services/extract_url_service'
-require_relative '../services/s3_bucket_file_explorer'
+# require_relative './extract_url_service'
+# require_relative './s3_bucket_file_explorer'
 
 class ApplicationController < ActionController::API
 
     def test 
-        extract_url_service = ExtractURLService.new(params[:url])
-        list_of_pages = extract_url_service.extract_urls
-        list_of_resolutions = get_resolutions(params[:devices].split(","))
-        list_of_browsers = params[:browsers].split(",")
+        # extract_url_service = ExtractURLService.new
+        # list_of_pages = extract_url_service.extract_urls(params[:url])
+        # list_of_resolutions = get_resolutions(params[:devices].split(","))
+        # list_of_browsers = params[:browsers].split(",")
         
-        parser(params[:url], list_of_pages[0..1], list_of_browsers, list_of_resolutions)
+        # parser(params[:url], list_of_pages, list_of_browsers, list_of_resolutions)
         render status: :ok
     end
 
@@ -50,8 +50,8 @@ class ApplicationController < ActionController::API
 
         if browser == "chrome"
             driver = Selenium::WebDriver.for :chrome
-        elsif browser == "firefox"
-            driver = Selenium::WebDriver.for :firefox
+        # elsif browser == "firefox"
+        #     driver = Selenium::WebDriver.for :firefox
         end
         
         driver.manage.window.resize_to(resolution[0], resolution[1])
